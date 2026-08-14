@@ -1,0 +1,39 @@
+/**
+ * CountingNotifier — ตัวห่อ (wrapper) ที่นับจำนวนครั้งการส่ง
+ *
+ * "Prefer composition over inheritance":
+ * ห้ามสืบทอด EmailNotifier/SmsNotifier (ไม่ใช่ is-a เชิงพฤติกรรม
+ * และจะห่อได้ทีละชนิด) — ให้ "ถือ" Notifier ตัวในไว้ (has-a)
+ * แล้ว "มอบงาน" (delegate) ให้มันทำ จึงห่อช่องทางชนิดไหนก็ได้
+ *
+ * รูปแบบนี้คือ Decorator pattern แบบเดียวกับ CountingSet ในสไลด์
+ */
+public final class CountingNotifier implements Notifier {
+
+
+    // TODO(3.1): ประกาศ field เก็บ Notifier ตัวใน (has-a) และตัวนับ
+    //            คำใบ้: รู้จักตัวในผ่าน "interface Notifier" เท่านั้น
+    private final Notifier inner;
+    private int count = 0;
+    /**
+     * @param inner ช่องทางจริงที่จะมอบงานให้ ห้าม null
+     * @throws IllegalArgumentException เมื่อ inner เป็น null
+     */
+    public CountingNotifier(Notifier inner) {
+        if (inner == null) {
+            throw new IllegalArgumentException("inner must not be null");
+        }
+        this.inner = inner;
+    }
+
+    @Override
+    public void send(String message) {
+        count++;
+        inner.send(message);
+    }
+
+    /** จำนวนครั้งที่ send ถูกเรียกบน wrapper ตัวนี้ */
+    public int sendCount() {
+        return count;
+    }
+}

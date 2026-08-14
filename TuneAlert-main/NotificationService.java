@@ -1,0 +1,79 @@
+import java.util.List;
+import java.util.ArrayList;
+
+/**
+ * NotificationService — โมดูลระดับสูงที่กระจายข้อความไปทุกช่องทาง
+ *
+ * โครงสร้างนี้ทำ DIP ถูกแล้วครึ่งทาง: รับ List<Notifier> ฉีดเข้ามาทาง
+ * constructor แทนการ new concrete class เอง — แต่ยังเหลือบั๊กจากบทเรียน
+ * Part 1: list ที่รับมาเป็น mutable และถูกเก็บลูกศรตรง ๆ (aliasing!)
+ * แถมยังไม่ validate input และไม่สนใจ threshold เลย
+ */
+public final class NotificationService {
+
+    private final List<Notifier> channels;
+    private final Priority threshold;
+
+    /**
+     * @param channels  ช่องทางทั้งหมด ห้าม null และห้ามมีสมาชิก null
+     * @param threshold ระดับต่ำสุดที่จะยอมส่ง ห้าม null
+     * @throws IllegalArgumentException เมื่อ input ผิดเงื่อนไข
+     */
+    public NotificationService(List<Notifier> channels, Priority threshold) {
+        // validate inputs
+        if (channels == null) {
+            throw new IllegalArgumentException("channels must not be null");
+        }
+        for (Notifier n : channels) {
+            if (n == null) {
+                throw new IllegalArgumentException("channels must not contain null");
+            }
+        }
+        if (threshold == null) {
+            throw new IllegalArgumentException("threshold must not be null");
+        }
+
+        this.channels = new ArrayList<>(channels);
+        this.threshold = threshold;
+    }
+
+    /** จำนวนช่องทางที่ลงทะเบียนไว้ */
+    public int channelCount() {
+        return channels.size();
+    }
+
+    /**
+     * กระจายข้อความไปทุกช่องทาง ถ้าความสำคัญถึงเกณฑ์
+     *
+     * @param message  ข้อความ ห้าม null/ว่าง
+     * @param priority ความสำคัญของข้อความนี้ ห้าม null
+     * @return true เมื่อส่งจริง, false เมื่อความสำคัญต่ำกว่าเกณฑ์ (ไม่ส่ง)
+     * @throws IllegalArgumentException เมื่อ input ผิดเงื่อนไข
+     */
+    public boolean broadcast(String message, Priority priority) {
+        if (message == null || message.trim().isEmpty()) {
+            throw new IllegalArgumentException("message must not be null or empty");
+        }
+        if (priority == null) {
+            throw new IllegalArgumentException("priority must not be null");
+        }
+
+        if (!priority.isAtLeast(threshold)) {
+            return false;
+        }
+
+        for (Notifier n : channels) {
+            n.send(message);    // polymorphism — ไม่สน concrete type เลย (OCP)
+        }
+        return true;
+    }
+
+    /** ความสะดวก: ประกาศเพลงใหม่ (แสดงการใช้ Song ร่วมกับ service) */
+    public boolean announceNewSong(Song song, Priority priority) {
+        if (song == null) {
+            throw new IllegalArgumentException("song must not be null");
+        }
+        return broadcast("New release: " + song.title() + " by " + song.artist(),
+                priority);
+    }
+}
